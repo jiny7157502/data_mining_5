@@ -15,50 +15,62 @@ test_list = setdiff(i, train_list)
 ucla_train = ucla[train_list, ]
 ucla_test = ucla[test_list, ]
 
+ucla_train
+nrow(ucla_train)
+
+ucla_test
+nrow(ucla_test)
+
 # 3. 학습데이터로 모델을 만드는 과정(모델링)
-m = glm(admit ~ gre + gpa + rank, data = ucla_train, family = binomial)
-coef(m)
+
+# 3-1. 결정트리 모델
+library(rpart)
+library(caret)
+r = rpart(admit~., data = ucla_train)
+
+# 3-2. 랜덤포레스트(트리 개수 50개) 모델
+library(randomForest)
+small_forest = randomForest(admit~., data = ucla_train, ntree = 50)
+
+# 3-3. 랜덤포레스트(트리 개수 1000개) 모델
+large_forest = randomForest(admit~., data = ucla_train, ntree = 1000)
+
+# 3-4. K-NN 모델
+k = knn(ucla_train, ucla_test, ucla_train$admit, k = 5)
+
+# 3-5. SVM(radial basis) 모델
+s = svm(admit~., data = ucla_train)
+
+# 3-6. SVM(polynomial) 모델
+s = svm(admit~., data = ucla_train, kernel = 'polynomial')
 
 # 4. 테스트데이터로 예측하고, 예측결과를 혼동행렬로 출력하는 과정
 
-# 4-1. 결정트리
-library(rpart)
+# 4-1. 결정트리 테스트 데이터 예측
 library(caret)
-
-r = rpart(admit~., data = ucla_train)
 newd = data.frame(gre=ucla_test$gre, gpa=ucla_test$gpa, rank=ucla_test$rank)
 predict(r, newdata = newd)
-r_pred = predict(r, newd, type='class')
-confusionMatrix(r_pred, ucla_train$admit)
+r_pred = predict(r, newd, type = 'class')
+confusionMatrix(r_pred, ucla_test$admit)
 
-table(r_pred, ucla_train$admit)
-
-# 4-2. 랜덤포레스트(트리 개수 50개)
-library(randomForest)
-small_forest = randomForest(admit~., data = ucla_train, ntree = 50)
+# 4-2. 랜덤포레스트(트리 개수 50개) 테스트 데이터 예측
 p = predict(small_forest, newdata=ucla_test)
-table(p, ucla_train$admit)
+table(p, ucla_test$admit)
 
-# 4-3. 랜덤포레스트(트리 개수 1000개)
-large_forest = randomForest(admit~., data = ucla_train, ntree = 1000)
+# 4-3. 랜덤포레스트(트리 개수 1000개) 테스트 데이터 예측
 p = predict(large_forest, newdata=ucla_test)
-table(p, ucla_train$admit)
+table(p, ucla_test$admit)
 
-# 4-4. K-NN
+# 4-4. K-NN 테스트 데이터 예측
 library(class)
 k = knn(ucla_train, ucla_test, ucla_train$admit, k = 5)
-str(k)
-str(ucla_train)
-p = predict(k, ucla_train$admit)
-table(k, ucla_train$admit)
+table(k, ucla_test$admit)
 
-# 4-5. SVM(radial basis)
+# 4-5. SVM(radial basis) 테스트 데이터 예측
 library(e1071)
-s = svm(admit~., data = ucla_train)
-p = predict(s, ucla_train)
-table(p, ucla_train$admit)
+p = predict(s, newdata = ucla_test)
+table(p, ucla_test$admit)
 
-# 4-6. SVM(polynomial)
-s = svm(admit~., data = ucla_train, kernel = 'polynomial')
-p = predict(s, ucla_train)
-table(p, ucla_train$admit)
+# 4-6. SVM(polynomial) 테스트 데이터 예측
+p = predict(s, newdata =  ucla_test)
+table(p, ucla_test$admit)
