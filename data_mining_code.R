@@ -15,6 +15,7 @@ test_list = setdiff(i, train_list)
 ucla_train = ucla[train_list, ]
 ucla_test = ucla[test_list, ]
 
+# 데이터 및 개수 확인
 ucla_train
 nrow(ucla_train)
 
@@ -36,22 +37,23 @@ small_forest = randomForest(admit~., data = ucla_train, ntree = 50)
 large_forest = randomForest(admit~., data = ucla_train, ntree = 1000)
 
 # 3-4. K-NN 모델
+library(class)
 k = knn(ucla_train, ucla_test, ucla_train$admit, k = 5)
 
 # 3-5. SVM(radial basis) 모델
+library(e1071)
 s = svm(admit~., data = ucla_train)
 
 # 3-6. SVM(polynomial) 모델
-s = svm(admit~., data = ucla_train, kernel = 'polynomial')
+sp = svm(admit~., data = ucla_train, kernel = 'polynomial')
 
 # 4. 테스트데이터로 예측하고, 예측결과를 혼동행렬로 출력하는 과정
 
 # 4-1. 결정트리 테스트 데이터 예측
-library(caret)
 newd = data.frame(gre=ucla_test$gre, gpa=ucla_test$gpa, rank=ucla_test$rank)
 predict(r, newdata = newd)
 r_pred = predict(r, newd, type = 'class')
-confusionMatrix(r_pred, ucla_test$admit)
+table(r_pred, ucla_test$admit)
 
 # 4-2. 랜덤포레스트(트리 개수 50개) 테스트 데이터 예측
 p = predict(small_forest, newdata=ucla_test)
@@ -62,15 +64,13 @@ p = predict(large_forest, newdata=ucla_test)
 table(p, ucla_test$admit)
 
 # 4-4. K-NN 테스트 데이터 예측
-library(class)
 k = knn(ucla_train, ucla_test, ucla_train$admit, k = 5)
 table(k, ucla_test$admit)
 
 # 4-5. SVM(radial basis) 테스트 데이터 예측
-library(e1071)
 p = predict(s, newdata = ucla_test)
 table(p, ucla_test$admit)
 
 # 4-6. SVM(polynomial) 테스트 데이터 예측
-p = predict(s, newdata =  ucla_test)
+p = predict(sp, newdata =  ucla_test)
 table(p, ucla_test$admit)
